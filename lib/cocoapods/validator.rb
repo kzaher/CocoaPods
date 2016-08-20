@@ -446,7 +446,27 @@ module Pod
           error('swift', 'Swift support uses dynamic frameworks and is therefore only supported on iOS > 8.') unless uses_xctest
         end
       end
+
+      swift_version = /^Apple Swift Version (?<version>\d+.\d+)/i.match(`swiftc -version`)[:version]
+
+      @installer.pods_project.targets.each do |target|
+        target.build_configurations.each do |config|
+            config.build_settings['SWIFT_VERSION'] = swift_version
+        end
+      end
+
       @installer.pods_project.save
+      
+      app_project = Xcodeproj::Project.open(validation_dir + 'App.xcodeproj')
+
+      app_project.targets.each do |target|
+        target.build_configurations.each do |config|
+            config.build_settings['SWIFT_VERSION'] = swift_version
+        end
+      end
+
+      app_project.save
+
     end
 
     def validate_vendored_dynamic_frameworks
